@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import { Document, DocumentVersion } from '../types/api';
 import TaskManager from './TaskManager';
 import DocumentHistory from './DocumentHistory';
 import DocumentCheckout from './DocumentCheckout';
-import { useAuth } from '../contexts/AuthContext';
 
 interface DocumentViewerProps {
   initialDocument: Document;
@@ -22,8 +21,7 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const { currentUser } = useAuth();
+  const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>(null);
 
   const loadDocumentContent = useCallback(async () => {
     if (!document?.id) return;
@@ -54,88 +52,64 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
         setContent(text);
         setFileUrl(null);
       }
-      setError('');
     } catch (err) {
       console.error('Error loading document content:', err);
       setError('Failed to load document content');
     } finally {
       setLoading(false);
-      setIsVisible(true);
     }
-  }, [document?.id, selectedVersion?.version_number, document.mime_type, fileUrl]);
+  }, [document?.id, selectedVersion?.version_number, fileUrl]);
+
+  const handleIframeLoad = useCallback(() => {
+    if (iframeElement && document.mime_type?.includes('pdf')) {
+      const doc = iframeElement.contentDocument;
+      if (doc) {
+        const style = doc.createElement('style');
+        style.textContent = `
+          body {
+            margin: 0;
+            background-color: #073642;
+          }
+        `;
+        doc.head.appendChild(style);
+      }
+    }
+  }, [iframeElement, document.mime_type]);
 
   useEffect(() => {
     loadDocumentContent();
   }, [loadDocumentContent]);
 
   useEffect(() => {
-    return () => {
-      if (fileUrl) {
-        URL.revokeObjectURL(fileUrl);
-      }
-    };
-  }, [fileUrl]);
-
-  const handleViewVersion = useCallback((version: DocumentVersion) => {
-    setSelectedVersion(version);
-    setActiveTab('preview');
-    setLoading(true);
-    setIsVisible(false);
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleView = useCallback(() => {
-    setSelectedVersion(null);
-    setActiveTab('preview');
-    setLoading(true);
+  const handleClose = useCallback(() => {
     setIsVisible(false);
-  }, []);
+    setTimeout(onClose, 300);
+  }, [onClose]);
 
-  const handleCheckoutUpdate = useCallback((updatedDoc: Document) => {
+  const handleDocumentUpdate = useCallback((updatedDoc: Document) => {
     setDocument(updatedDoc);
     if (onUpdate) {
       onUpdate();
     }
   }, [onUpdate]);
 
-  const handleDownload = useCallback(async () => {
-    if (!document?.id) return;
-
-    try {
-      const response = await api.get(`/documents/${document.id}/download`, {
-        responseType: 'blob'
-      });
-      
-      const blob = new Blob([response.data], { 
-        type: response.headers['content-type'] 
-      });
-      const url = URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = document.title;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Error downloading document:', err);
-      setError('Failed to download document');
-    }
-  }, [document?.id, document?.title]);
-
-  const documentContent = useMemo(() => {
+  const renderContent = useMemo(() => {
     if (loading) {
       return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-solarized-base1">Loading document...</p>
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-solarized-blue"></div>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="rounded-md bg-solarized-red bg-opacity-10 p-4 mb-4">
-          <p className="text-solarized-red text-sm">{error}</p>
+        <div className="flex items-center justify-center h-full text-solarized-red">
+          {error}
         </div>
       );
     }
@@ -144,9 +118,10 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
       if (document.mime_type?.includes('pdf')) {
         return (
           <iframe
+            ref={setIframeElement}
             src={fileUrl}
-            className="w-full h-[calc(90vh-12rem)] border-0 rounded-md"
-            title={document.title}
+            className="w-full h-full border-0"
+            onLoad={handleIframeLoad}
           />
         );
       }
@@ -155,7 +130,7 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
           <img
             src={fileUrl}
             alt={document.title}
-            className="max-w-full h-auto rounded-md"
+            className="max-w-full max-h-full object-contain mx-auto"
           />
         );
       }
@@ -163,128 +138,106 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
 
     if (content) {
       return (
-        <div className="prose prose-invert max-w-none">
-          <pre className="whitespace-pre-wrap text-solarized-base1 bg-solarized-base02 p-4 rounded-md">
-            {content}
-          </pre>
-        </div>
+        <pre className="whitespace-pre-wrap font-mono text-sm p-4 h-full overflow-auto">
+          {content}
+        </pre>
       );
     }
 
-    return (
-      <p className="text-solarized-base1">No preview available</p>
-    );
-  }, [loading, error, fileUrl, content, document.mime_type, document.title]);
-
-  if (!isVisible) {
-    return (
-      <div className="fixed inset-0 bg-solarized-base03 bg-opacity-75 flex items-center justify-center p-4 z-[9999]">
-        <div className="flex justify-center items-center">
-          <p className="text-solarized-base1">Loading document...</p>
-        </div>
-      </div>
-    );
-  }
+    return null;
+  }, [loading, error, fileUrl, content, document.mime_type, document.title, handleIframeLoad]);
 
   return (
-    <div 
-      className="fixed inset-0 bg-solarized-base03 bg-opacity-75 flex items-center justify-center p-4 z-[9999] document-viewer-modal"
-      style={{ backdropFilter: 'blur(4px)' }}
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+      onClick={handleClose}
     >
-      <div className="bg-solarized-base03 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col document-viewer-content">
-        <div className="p-4 border-b border-solarized-base01">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="heading-2 text-solarized-base1">
-                {document.title}
-                {selectedVersion && (
-                  <span className="ml-2 text-sm text-solarized-base01">
-                    (Version {selectedVersion.version_number})
-                  </span>
-                )}
-              </h2>
-              {selectedVersion && (
-                <button
-                  onClick={handleView}
-                  className="text-sm text-solarized-blue hover:text-solarized-base1"
-                >
-                  Return to latest version
-                </button>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="text-solarized-base1 hover:text-solarized-base0"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setActiveTab('preview')}
-              className={`px-4 py-2 rounded-t-md ${
-                activeTab === 'preview'
-                  ? 'bg-solarized-base02 text-solarized-base1'
-                  : 'text-solarized-base01 hover:text-solarized-base1'
-              }`}
-            >
-              Preview
-            </button>
-            <button
-              onClick={() => setActiveTab('tasks')}
-              className={`px-4 py-2 rounded-t-md ${
-                activeTab === 'tasks'
-                  ? 'bg-solarized-base02 text-solarized-base1'
-                  : 'text-solarized-base01 hover:text-solarized-base1'
-              }`}
-            >
-              Tasks
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`px-4 py-2 rounded-t-md ${
-                activeTab === 'history'
-                  ? 'bg-solarized-base02 text-solarized-base1'
-                  : 'text-solarized-base01 hover:text-solarized-base1'
-              }`}
-            >
-              History
-            </button>
-
-            <div className="flex-1"></div>
-
-            {!selectedVersion && (
-              <button
-                onClick={() => setShowCheckout(true)}
-                className={`btn ${document.current_checkout ? 'btn-secondary' : 'btn-primary'}`}
-                disabled={!!document.current_checkout && document.current_checkout.checked_out_by.id !== currentUser?.id}
-              >
-                {document.current_checkout ? 'Check In' : 'Check Out'}
-              </button>
-            )}
-            <button
-              onClick={handleDownload}
-              className="btn btn-secondary"
-              disabled={loading}
-            >
-              Download
-            </button>
-          </div>
+      <div
+        className="bg-solarized-base02 w-11/12 h-5/6 max-w-6xl rounded-lg shadow-xl flex flex-col overflow-hidden transition-transform duration-300 transform"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          transform: isVisible ? 'scale(1)' : 'scale(0.9)',
+        }}
+      >
+        <div className="flex justify-between items-center p-4 border-b border-solarized-base01">
+          <h2 className="text-xl font-semibold text-solarized-base1">{document.title}</h2>
+          <button
+            onClick={handleClose}
+            className="text-solarized-base1 hover:text-solarized-base0 focus:outline-none"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
-          {activeTab === 'preview' && documentContent}
-          {activeTab === 'tasks' && (
-            <TaskManager
-              document={document}
-              onClose={() => setActiveTab('preview')}
-              onTaskUpdate={onUpdate}
-            />
-          )}
-          {activeTab === 'history' && (
-            <DocumentHistory document={document} onVersionView={handleViewVersion} />
-          )}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-auto relative">
+            {renderContent}
+          </div>
+
+          <div className="w-80 border-l border-solarized-base01 flex flex-col">
+            <div className="flex border-b border-solarized-base01">
+              <button
+                className={`flex-1 px-4 py-2 text-sm font-medium focus:outline-none ${
+                  activeTab === 'preview'
+                    ? 'text-solarized-blue border-b-2 border-solarized-blue'
+                    : 'text-solarized-base1 hover:text-solarized-base0'
+                }`}
+                onClick={() => setActiveTab('preview')}
+              >
+                Preview
+              </button>
+              <button
+                className={`flex-1 px-4 py-2 text-sm font-medium focus:outline-none ${
+                  activeTab === 'tasks'
+                    ? 'text-solarized-blue border-b-2 border-solarized-blue'
+                    : 'text-solarized-base1 hover:text-solarized-base0'
+                }`}
+                onClick={() => setActiveTab('tasks')}
+              >
+                Tasks
+              </button>
+              <button
+                className={`flex-1 px-4 py-2 text-sm font-medium focus:outline-none ${
+                  activeTab === 'history'
+                    ? 'text-solarized-blue border-b-2 border-solarized-blue'
+                    : 'text-solarized-base1 hover:text-solarized-base0'
+                }`}
+                onClick={() => setActiveTab('history')}
+              >
+                History
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4">
+              {activeTab === 'tasks' && (
+                <TaskManager 
+                  document={document}
+                  onClose={() => setActiveTab('preview')}
+                  onTaskUpdate={() => onUpdate?.()}
+                />
+              )}
+              {activeTab === 'history' && (
+                <DocumentHistory
+                  document={document}
+                  onVersionView={(version) => setSelectedVersion(version)}
+                />
+              )}
+            </div>
+
+            <div className="p-4 border-t border-solarized-base01">
+              <button
+                onClick={() => setShowCheckout(true)}
+                className="w-full px-4 py-2 bg-solarized-blue text-white rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-solarized-blue"
+              >
+                Manage Document
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -292,7 +245,10 @@ export default function DocumentViewer({ initialDocument, onClose, onUpdate }: D
         <DocumentCheckout
           document={document}
           onClose={() => setShowCheckout(false)}
-          onCheckoutUpdate={handleCheckoutUpdate}
+          onCheckoutUpdate={() => {
+            const updatedDoc = { ...document, checked_out: true };
+            handleDocumentUpdate(updatedDoc);
+          }}
         />
       )}
     </div>

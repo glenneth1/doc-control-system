@@ -24,7 +24,7 @@ A modern web-based document management system built with Python and FastAPI.
 
 ## Project Structure
 
-```
+```bash
 doc-control-system/
 ├── backend/                # Python backend code
 │   ├── app/
@@ -45,11 +45,13 @@ doc-control-system/
 ## Setup and Installation
 
 ### Prerequisites
+
 - Python 3.11+
 - PostgreSQL
 - Node.js 18+
 
 ### Development Setup
+
 1. Clone the repository
 2. Create and activate a Python virtual environment
 3. Install dependencies: `pip install -r requirements.txt`
@@ -71,6 +73,7 @@ API documentation is automatically generated and available at `/docs` when runni
 ## Testing
 
 Run tests with pytest:
+
 ```bash
 pytest
 ```

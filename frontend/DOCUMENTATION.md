@@ -1,17 +1,20 @@
 # Document Control System Documentation
 
 ## Overview
+
 A comprehensive document management system built with React, TypeScript, and FastAPI. The system provides robust document management capabilities, including version control, task management, and document check-in/check-out functionality.
 
 ## Core Features
 
 ### 1. Authentication System
+
 - JWT token-based authentication
 - Protected routes with role-based access
 - Secure token management and refresh mechanisms
 - User session persistence
 
 ### 2. Document Management
+
 - Document upload and download
 - Multiple file type support
 - Version control system
@@ -19,12 +22,14 @@ A comprehensive document management system built with React, TypeScript, and Fas
 - Document preview capabilities
 
 ### 3. Task Management
+
 - Create and assign tasks for documents
 - Task status tracking (pending, in progress, completed, rejected)
 - Priority levels and due dates
 - Task history and updates
 
 ### 4. Version Control
+
 - Document versioning
 - Version comparison (unified and side-by-side views)
 - Version history tracking
@@ -33,6 +38,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## Technical Architecture
 
 ### Frontend Stack
+
 - React 18+ with TypeScript
 - Vite for build tooling
 - Tailwind CSS for styling
@@ -42,6 +48,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ### Key Components
 
 #### 1. DocumentViewer
+
 - Purpose: Main document interaction interface
 - Features:
   - File preview
@@ -50,6 +57,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
   - Check-out controls
 
 #### 2. DocumentHistory
+
 - Purpose: Track document changes and versions
 - Features:
   - Activity timeline
@@ -58,6 +66,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
   - Change tracking
 
 #### 3. VersionCompare
+
 - Purpose: Compare different document versions
 - Features:
   - Text-based file comparison
@@ -66,6 +75,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
   - Version metadata display
 
 #### 4. TaskManager
+
 - Purpose: Manage document-related tasks
 - Features:
   - Task creation and assignment
@@ -74,6 +84,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
   - Due date tracking
 
 #### 5. DocumentCheckout
+
 - Purpose: Handle document locking mechanism
 - Features:
   - Check-out status tracking
@@ -84,6 +95,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## API Integration
 
 ### Core Endpoints
+
 - /documents/{id}/versions
 - /documents/{id}/activities
 - /documents/{id}/tasks
@@ -91,6 +103,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 - /documents/{id}/checkin
 
 ### Data Models
+
 - Document
 - DocumentVersion
 - DocumentActivity
@@ -100,6 +113,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## Pending Improvements
 
 ### High Priority
+
 1. Task Notifications
    - Real-time notifications for task assignments
    - Email notifications for important updates
@@ -125,6 +139,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
    - Network request optimization
 
 ### Medium Priority
+
 1. Document Sharing Features
    - Share links generation
    - Permission management
@@ -144,6 +159,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
    - Change suggestions
 
 ### Low Priority
+
 1. UI/UX Improvements
    - Dark/light theme support
    - Customizable layouts
@@ -159,6 +175,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## Recommendations
 
 ### 1. Immediate Focus
+
 1. Implement Task Notifications
    - Critical for user engagement
    - Improves workflow efficiency
@@ -178,6 +195,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
    - Support for larger files
 
 ### 2. Next Phase
+
 1. Document Sharing
    - External collaboration support
    - Granular permissions
@@ -191,6 +209,7 @@ A comprehensive document management system built with React, TypeScript, and Fas
    - User presence
 
 ### 3. Future Enhancements
+
 1. Advanced Analytics
    - Usage tracking
    - Performance metrics
@@ -206,24 +225,28 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## Development Guidelines
 
 ### Code Structure
+
 - Maintain component modularity
 - Follow TypeScript best practices
 - Write comprehensive tests
 - Document API changes
 
 ### State Management
+
 - Use React Context appropriately
 - Implement proper caching
 - Handle loading states
 - Manage side effects
 
 ### Security
+
 - Implement RBAC
 - Secure API endpoints
 - Validate user input
 - Handle sensitive data
 
 ### Performance
+
 - Optimize bundle size
 - Implement code splitting
 - Use proper caching
@@ -232,12 +255,14 @@ A comprehensive document management system built with React, TypeScript, and Fas
 ## Getting Started
 
 ### Prerequisites
+
 ```bash
 node >= 16.0.0
 npm >= 7.0.0
 ```
 
 ### Installation
+
 ```bash
 # Install dependencies
 npm install
@@ -250,16 +275,19 @@ npm run build
 ```
 
 ### Configuration
+
 - Environment variables
 - API endpoints
 - Authentication settings
 - Storage configuration
 
 ## Contributing
+
 - Fork the repository
 - Create feature branches
 - Follow code style guidelines
 - Submit pull requests
 
 ## License
+
 MIT License - See LICENSE file for details

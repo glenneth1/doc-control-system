@@ -39,8 +39,7 @@ doc-control-system/
 │   ├── src/
 │   ├── public/
 │   └── package.json
-├── docs/                  # Documentation
-└── docker/               # Docker configuration
+└── docs/                  # Documentation
 ```
 
 ## Setup and Installation
@@ -49,7 +48,6 @@ doc-control-system/
 - Python 3.11+
 - PostgreSQL
 - Node.js 18+
-- Docker (optional)
 
 ### Development Setup
 1. Clone the repository
@@ -75,3 +73,4 @@ API documentation is automatically generated and available at `/docs` when runni
 Run tests with pytest:
 ```bash
 pytest
+```

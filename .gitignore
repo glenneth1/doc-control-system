@@ -43,3 +43,6 @@ ENV/
 # Database
 *.sqlite3
 *.db
+
+# Uploads
+backend/uploads/
